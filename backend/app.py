@@ -56,4 +56,4 @@ def upload_file():
     return "Ogiltig fil. Ladda upp en giltig ZIP fil med project.xml fil."
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
