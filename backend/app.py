@@ -3,8 +3,10 @@ from zipfile import ZipFile
 import io
 from pdb import set_trace
 from utils import assemble_data
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Configure upload folder and allowed extensions
 ALLOWED_EXTENSIONS = {'xml', 'zip'}
