@@ -53,7 +53,7 @@ def upload_file():
                     return jsonify({"html": html_content})
 
         except Exception as e:
-            return jsonify({"message": f"Fel omvandling fil: {str(e)}"}), 500
+            return jsonify({"message": f"Fel omvandling av fil: {str(e)}"}), 500
                     
     return "Ogiltig fil. Ladda upp en giltig ZIP fil med project.xml fil."
 
