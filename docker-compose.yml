@@ -24,5 +24,4 @@ services:
       - backend
     volumes:
       - ./frontend:/app
-    environment:
-      - HOST=0.0.0.0
+      - /app/node_modules
