@@ -21,4 +21,4 @@ RUN npm install -g serve
 EXPOSE 3030
 
 # Start the server
-CMD ["serve", "-s", "build" "-l", "3030"]
+CMD ["serve", "-s", "build", "-l", "3030"]
