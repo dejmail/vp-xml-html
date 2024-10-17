@@ -24,3 +24,5 @@ services:
       - backend
     volumes:
       - ./frontend:/app
+    environment:
+      - HOST=0.0.0.0
