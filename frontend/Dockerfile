@@ -11,14 +11,12 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Build the React app for production
+# Build the React app for production (optional if using production build)
 RUN npm run build
-
-# Install a simple HTTP server to serve static files
-RUN npm install -g serve
 
 # Expose the port the application runs on
 EXPOSE 3030
 
-# Start the server
-CMD ["serve", "-s", "build", "-l", "3030"]
+# Start the server and bind to 0.0.0.0
+CMD ["npm", "start", "--", "--host", "0.0.0.0"]
+
