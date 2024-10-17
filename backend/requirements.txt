@@ -9,3 +9,4 @@ MarkupSafe==3.0.1
 soupsieve==2.6
 uv==0.4.22
 Werkzeug==3.0.4
+gunicorn==20.1.0
