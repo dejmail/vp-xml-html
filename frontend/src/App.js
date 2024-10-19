@@ -40,7 +40,8 @@ function App() {
         setGeneratedHtml(result.html);
         setMessage("Fil uppladdad.");
       } else {
-        setMessage("Fel med uppladdning. Vänligen försök igen.");
+        const errorResult = await response.json();
+        setMessage(`Fel med uppladdning. Vänligen försök igen. - ${errorResult.message}`);
       }
     } catch (error) {
       console.error("Fel med uppladdning:", error);

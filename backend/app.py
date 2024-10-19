@@ -5,6 +5,8 @@ from pdb import set_trace
 from utils import assemble_data
 from flask_cors import CORS
 
+import xml.etree.ElementTree as ET
+
 app = Flask(__name__)
 CORS(app)
 
@@ -24,7 +26,8 @@ def index():
 def upload_file():
 
     if 'file' not in request.files:
-        return redirect(request.url)
+        return jsonify({"message": "Ingen file i POST skickelse"}), 400
+        # return redirect(request.url)
     
     page_header = request.form.get('header', 'Extraherad Model  - Default Rubrik')  # Get header value from form
     file = request.files['file']
@@ -36,23 +39,24 @@ def upload_file():
             
             # Process the zip file in memory
             with ZipFile(file_in_memory) as zip_file:
-                xml_content = None
                 image_content = None
-                
+        
                 for name in zip_file.namelist():
                     if name.endswith('project.xml'):
                         with zip_file.open(name) as xml_file:
-                            xml_content = name
+                            tree = ET.ElementTree(ET.fromstring(xml_file.read().decode('utf-8')))
+                            xml_content = tree.getroot()
                     elif name.endswith('.png'):
                         with zip_file.open(name) as png_file:
                             image_content = png_file.read()
                 
-                if xml_content and image_content:
+                if (xml_content is not None) and (image_content is not None):
                     # Generate HTML content using the header
                     html_content = assemble_data(xml_content, image_content,page_header)
                     return jsonify({"html": html_content})
 
-        except Exception as e:
+        except Exception as e:        
+            print(f"Error occurred: {e}")  # Log the error for debugging
             return jsonify({"message": f"Fel omvandling av fil: {str(e)}"}), 500
                     
     return "Ogiltig fil. Ladda upp en giltig ZIP fil med project.xml fil."

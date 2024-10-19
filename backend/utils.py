@@ -6,10 +6,10 @@ import base64
 app = Flask(__name__)
 
 
-def parse_xml(file_path):
+def parse_xml(root):
     # Load and parse the XML file
-    tree = ET.parse(file_path)
-    root = tree.getroot()
+    # tree = ET.parse(file_path)
+    # root = tree.getroot()
 
     # Extract class information
     class_info = []
@@ -55,10 +55,10 @@ def parse_xml(file_path):
             })
     return class_info
 
-def extract_instance_inheritance(xml_file):
+def extract_instance_inheritance(root):
     # Parse the XML file
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
+    # tree = ET.parse(xml_file)
+    # root = tree.getroot()
 
     # Dictionary to store the extracted relationships
     instance_inheritance = {}
@@ -80,9 +80,9 @@ def extract_instance_inheritance(xml_file):
 
     return instance_inheritance
 
-def extract_diagram_shapes(xml_file):
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
+def extract_diagram_shapes(root):
+    # tree = ET.parse(xml_file)
+    # root = tree.getroot()
 
     diagram_shapes = []
 
@@ -217,15 +217,15 @@ def generate_html_data(diagram_elements,
 
     return html_output
 
-def assemble_data(file_path, model_diagram, page_header):
+def assemble_data(xml_root, model_diagram, page_header):
     # Parse the XML and extract classes
 
     
-    class_info = parse_xml(file_path)
+    class_info = parse_xml(xml_root)
 
-    diagram_elements = extract_diagram_shapes(file_path)
+    diagram_elements = extract_diagram_shapes(xml_root)
 
-    inheritance = extract_instance_inheritance(file_path)
+    inheritance = extract_instance_inheritance(xml_root)
 
     # Generate HTML content with Bootstrap styling
     html_content = generate_html_data(diagram_elements, class_info, inheritance, model_diagram, page_header)
