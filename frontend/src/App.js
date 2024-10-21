@@ -1,4 +1,8 @@
+
+
 import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
 
 function App() {
   const [file, setFile] = useState(null);
@@ -11,10 +15,10 @@ function App() {
     setFile(event.target.files[0]);
   };
 
-    // Handle header input change
-    const handleHeaderChange = (event) => {
-      setHeader(event.target.value);
-    };
+  // Handle header input change
+  const handleHeaderChange = (event) => {
+    setHeader(event.target.value);
+  };
 
   // Handle file upload form submission
   const handleSubmit = async (event) => {
@@ -61,15 +65,25 @@ function App() {
   };
 
   return (
+
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="w-full max-w-lg mx-auto p-4 border rounded shadow bg-white">
+      
     <div className="container">
       <div className="row my-4">
         <h1 className="text-1xl font-bold mb-6 text-center text-gray-800">
           Visual Paradigm XML-HTML omvandlare
         </h1>
+        {/* GitHub Icon Link */}
+        <div className="text-center my-4">
+          <a href="https://github.com/dejmail/vp-xml-html" target="_blank" rel="noopener noreferrer">
+            <FontAwesomeIcon icon={faGithub} size="2x" className="text-gray-800 hover:text-black transition duration-300" />
+          </a>
+        </div>
       </div>
 
-           {/* File Upload Form */}
-           <div className="row my-4">
+      {/* File Upload Form */}
+      <div className="row my-4">
         <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto p-4 border rounded shadow">
           <div className="mb-4">
             <label htmlFor="file" className="block text-gray-700 font-medium mb-2">Välja ZIP fil</label>
@@ -116,6 +130,8 @@ function App() {
           </div>
         </div>
       )}
+    </div>
+    </div>
     </div>
   );
 }
