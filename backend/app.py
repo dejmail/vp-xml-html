@@ -32,6 +32,7 @@ def upload_file():
     page_header = request.form.get('header', 'Extraherad Model  - Default Rubrik')  # Get header value from form
     file = request.files['file']
     # Ensure the file is a zip file
+    
     if file and file.filename.endswith('.zip'):
         # Read the uploaded file into memory
         try:
@@ -46,13 +47,17 @@ def upload_file():
                         with zip_file.open(name) as xml_file:
                             tree = ET.ElementTree(ET.fromstring(xml_file.read().decode('utf-8')))
                             xml_content = tree.getroot()
-                    elif name.endswith('.png'):
+                    elif name.endswith(('.png', '.jpg', '.jpeg', '.svg')):
                         with zip_file.open(name) as png_file:
+                            image_extension = name.split('.')[-1]
                             image_content = png_file.read()
                 
                 if (xml_content is not None) and (image_content is not None):
                     # Generate HTML content using the header
-                    html_content = assemble_data(xml_content, image_content,page_header)
+                    html_content = assemble_data(xml_content, 
+                                                 image_content, 
+                                                 image_extension, 
+                                                 page_header)
                     return jsonify({"html": html_content})
 
         except Exception as e:        

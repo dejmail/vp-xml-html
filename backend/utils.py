@@ -2,14 +2,13 @@ from flask import Flask, jsonify, request
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 import base64
+import html
+from pdb import set_trace
 
 app = Flask(__name__)
 
 
 def parse_xml(root):
-    # Load and parse the XML file
-    # tree = ET.parse(file_path)
-    # root = tree.getroot()
 
     # Extract class information
     class_info = []
@@ -56,9 +55,6 @@ def parse_xml(root):
     return class_info
 
 def extract_instance_inheritance(root):
-    # Parse the XML file
-    # tree = ET.parse(xml_file)
-    # root = tree.getroot()
 
     # Dictionary to store the extracted relationships
     instance_inheritance = {}
@@ -81,8 +77,6 @@ def extract_instance_inheritance(root):
     return instance_inheritance
 
 def extract_diagram_shapes(root):
-    # tree = ET.parse(xml_file)
-    # root = tree.getroot()
 
     diagram_shapes = []
 
@@ -105,8 +99,6 @@ def extract_diagram_shapes(root):
         })
     
     return diagram_shapes
-
-import html
 
 def extract_paragraphs(html_text, keep_tags=["p", "a"]):
 
@@ -139,6 +131,7 @@ def generate_html_data(diagram_elements,
                        classes, 
                        inheritance,
                        model_diagram,
+                       image_extension,
                        page_header):
 
     html_output = f"""
@@ -159,12 +152,20 @@ def generate_html_data(diagram_elements,
     </div>
 
     <div class="row my-4">
-    <img src="data:image/png;base64,{base64.b64encode(model_diagram).decode('utf-8')}" alt="Beskrivning av modellen" usemap="#modelmap" class="border shadow">
-    </div>
+
+    """
+
+    if image_extension == 'svg':
+        html_output += f"""<img src="data:image/{image_extension}+xml;base64,{base64.b64encode(model_diagram).decode('utf-8')}" alt="Beskrivning av modellen" usemap="#modelmap" class="border shadow">"""
+    else:
+        html_output += f"""<img src="data:image/svg+xml;base64,{base64.b64encode(model_diagram).decode('utf-8')}" alt="Beskrivning av modellen" usemap="#modelmap" class="border shadow">"""
+    
+    html_output += """</div> 
     
     <map name="modelmap">
     """
 
+    set_trace()
     # Define the clickable areas based on diagram elements
     for element in diagram_elements:
         idref = element['id']
@@ -176,6 +177,8 @@ def generate_html_data(diagram_elements,
 
         # Use the idref to create a clickable area
         map_area = f'<area shape="rect" coords="{x},{y},{float(x)+float(width)},{float(y)+float(height)}" href="#{idref}" alt="{idref}" name="{name}">'
+        print(map_area)
+        set_trace()
         html_output += map_area
         
     html_output += "</map>"
@@ -217,7 +220,7 @@ def generate_html_data(diagram_elements,
 
     return html_output
 
-def assemble_data(xml_root, model_diagram, page_header):
+def assemble_data(xml_root, model_diagram, image_extension, page_header):
     # Parse the XML and extract classes
 
     
@@ -228,7 +231,7 @@ def assemble_data(xml_root, model_diagram, page_header):
     inheritance = extract_instance_inheritance(xml_root)
 
     # Generate HTML content with Bootstrap styling
-    html_content = generate_html_data(diagram_elements, class_info, inheritance, model_diagram, page_header)
+    html_content = generate_html_data(diagram_elements, class_info, inheritance, model_diagram, image_extension, page_header)
     
     return html_content 
 
