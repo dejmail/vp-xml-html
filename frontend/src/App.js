@@ -107,7 +107,8 @@ const App = () => {
   return (
     <div className="App">
 
-    
+      <h1 className="text-2xl font-bold text-center mb-6">Visual Paradigm XML to HTML Converter</h1>
+
       {/* GitHub Icon */}
       <div className="text-right p-4">
         <a href="https://github.com/dejmail/vp-xml-html.git" target="_blank" rel="noopener noreferrer">
@@ -125,9 +126,7 @@ const App = () => {
           </svg>
         </a>
       </div>
-
-      <h1 className="text-2xl font-bold text-center mb-6">Visual Paradigm XML to HTML Converter</h1>
-  
+        
       {/* File Upload Section */}
       <FileUpload onFilesUploaded={handleFilesUploaded} />
   
