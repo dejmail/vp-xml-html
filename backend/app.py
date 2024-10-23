@@ -25,44 +25,36 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload_file():
 
-    if 'file' not in request.files:
-        return jsonify({"message": "Ingen file i POST skickelse"}), 400
+    if len(request.files) < 2:
+        return jsonify({"message": "Behöver project.xml och en modell i SVG format"}), 400
         # return redirect(request.url)
+    elif len(request.files) == 2:
+        page_header = request.form.get('header', 'Extraherad Model  - Default Rubrik')  # Get header value from form
     
-    page_header = request.form.get('header', 'Extraherad Model  - Default Rubrik')  # Get header value from form
-    file = request.files['file']
-    # Ensure the file is a zip file
-    
-    if file and file.filename.endswith('.zip'):
-        # Read the uploaded file into memory
-        try:
-            file_in_memory = io.BytesIO(file.read())
+        for file in request.files:
             
-            # Process the zip file in memory
-            with ZipFile(file_in_memory) as zip_file:
-                image_content = None
-        
-                for name in zip_file.namelist():
-                    if name.endswith('project.xml'):
-                        with zip_file.open(name) as xml_file:
-                            tree = ET.ElementTree(ET.fromstring(xml_file.read().decode('utf-8')))
-                            xml_content = tree.getroot()
-                    elif name.endswith(('.png', '.jpg', '.jpeg', '.svg')):
-                        with zip_file.open(name) as png_file:
-                            image_extension = name.split('.')[-1]
-                            image_content = png_file.read()
+            if file == 'xml':
+                try:
+                    file_in_memory = io.BytesIO(request.files.get(file).read())        
                 
-                if (xml_content is not None) and (image_content is not None):
-                    # Generate HTML content using the header
-                    html_content = assemble_data(xml_content, 
-                                                 image_content, 
-                                                 image_extension, 
-                                                 page_header)
-                    return jsonify({"html": html_content})
-
-        except Exception as e:        
-            print(f"Error occurred: {e}")  # Log the error for debugging
-            return jsonify({"message": f"Fel omvandling av fil: {str(e)}"}), 500
+                    tree = ET.ElementTree(ET.fromstring(file_in_memory.read().decode('utf-8')))
+                    xml_content = tree.getroot()
+                except Exception as e:        
+                    print(f"Error occurred: {e}")  # Log the error for debugging
+                    return jsonify({"message": f"Fel omvandling av fil: {str(e)}"}), 500
+            
+            elif file == 'svg':
+                image_extension = 'svg'
+                image_content = request.files.get(file).read()
+                    
+        if (xml_content is not None) and (image_content is not None):
+                        # Generate HTML content using the header
+            html_content, class_names = assemble_data(xml_content, 
+                                        image_content, 
+                                        image_extension, 
+                                        page_header)
+            return jsonify({"html": html_content,
+                            "classes" : class_names})
                     
     return "Ogiltig fil. Ladda upp en giltig ZIP fil med project.xml fil."
 

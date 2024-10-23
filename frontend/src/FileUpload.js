@@ -1,74 +1,89 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
-function FileUpload() {
-  const [file, setFile] = useState(null);
-  const [header, setHeader] = useState("");
+const FileUpload = ({ onFilesUploaded }) => {
+  const [files, setFiles] = useState([]);
   const [message, setMessage] = useState("");
-  const [generatedHtml, setGeneratedHtml] = useState(null);
 
+  const onDrop = useCallback((acceptedFiles) => {
+    // Store the files dropped
+    setFiles(acceptedFiles);
+  }, []);
 
-  // Function to handle file input change
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: ".zip,.svg,.xml", // Accept SVG and XML files
+    multiple: true, // Allow multiple file uploads
+  });
 
-  // Function to handle form submission
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!file) {
-      setMessage("Välja en fil först");
+  const handleUpload = async () => {
+    // Check if we have both required files: SVG and XML
+    const svgFile = files.find(file => file.name.endsWith('.svg'));
+    const xmlFile = files.find(file => file.name.endsWith('.xml'));
+    if (!svgFile || !xmlFile) {
+      setMessage("Please upload both SVG and project.xml files.");
       return;
     }
 
-    // Create a FormData object to send file data
     const formData = new FormData();
-    formData.append('header', header)
-    formData.append('file', file);
+    formData.append('svg', svgFile);
+    formData.append('xml', xmlFile);
 
     try {
-      // Send the file to the Flask backend
       const response = await fetch('/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       if (response.ok) {
-        const result = await response.json();
-        setMessage(`Fil uppladdad: ${result.message}`);
+        const data = await response.json();
+        onFilesUploaded(data);
+        setMessage("Files uploaded and classes extracted successfully.");
       } else {
-        setMessage("Fel med uppladdning. Försök igen.");
+        const errorResult = await response.json();
+        setMessage(`Upload failed. Please try again. - ${errorResult.message}`);
       }
     } catch (error) {
-      console.error("Fel med uppladdning:", error);
-      setMessage("Fel med uppladdning. Försök igen.");
+      console.error("Upload failed:", error);
+      setMessage("Upload failed. Please try again.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="file" className="block text-gray-700 text-center font-medium mb-4">Välja ZIP fil exporterat från Visual Paradigm</label>
-            <input
-              type="file"
-              id="file"
-              onChange={handleFileChange}
-              accept=".zip"
-              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
-            />
-          </div>
-          <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">
-            Ladda Upp
-          </button>
-        </form>
-        {message && (
-          <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
-        )}
+    <div className="file-upload">
+      <div
+        {...getRootProps({
+          className: 'dropzone w-full max-w-lg mx-auto p-6 border-2 border-dashed rounded cursor-pointer text-center',
+        })}
+      >
+        <input {...getInputProps()} />
+        <p>Drag & drop the SVG and XML files here, or click to select files</p>
       </div>
+      
+      {files.length > 0 && (
+
+<div class="mt-4 p-4 border border-gray-200 rounded-lg shadow-lg bg-gray-50 w-1/2 mx-auto">
+  <strong class="block text-lg font-semibold text-gray-700 mb-2">Selected Files:</strong>
+  <ul class="list-disc list-inside text-gray-600">
+            {files.map(file => (
+              <li key={file.name}>{file.name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <button
+        onClick={handleUpload}
+        className="w-1/2 mx-auto mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300 block"
+        
+
+      >
+        Upload and Extract Classes
+      </button>
+      
+      <div className="my-4 text-center text-red-500">{message}</div>
     </div>
   );
-}
+};
 
 export default FileUpload;

@@ -12,7 +12,7 @@ def parse_xml(root):
 
     # Extract class information
     class_info = []
-    
+    class_names = []
     # Find all classes
     for cls in root.findall('.//Class'):
         class_name = cls.get('Name')
@@ -52,7 +52,8 @@ def parse_xml(root):
                 'Attributes': attributes
                 
             })
-    return class_info
+            class_names.append(class_name)
+    return class_info, class_names
 
 def extract_instance_inheritance(root):
 
@@ -165,7 +166,7 @@ def generate_html_data(diagram_elements,
     <map name="modelmap">
     """
 
-    set_trace()
+    # set_trace()
     # Define the clickable areas based on diagram elements
     for element in diagram_elements:
         idref = element['id']
@@ -178,7 +179,7 @@ def generate_html_data(diagram_elements,
         # Use the idref to create a clickable area
         map_area = f'<area shape="rect" coords="{x},{y},{float(x)+float(width)},{float(y)+float(height)}" href="#{idref}" alt="{idref}" name="{name}">'
         print(map_area)
-        set_trace()
+        # set_trace()
         html_output += map_area
         
     html_output += "</map>"
@@ -224,7 +225,7 @@ def assemble_data(xml_root, model_diagram, image_extension, page_header):
     # Parse the XML and extract classes
 
     
-    class_info = parse_xml(xml_root)
+    class_info, class_names = parse_xml(xml_root)
 
     diagram_elements = extract_diagram_shapes(xml_root)
 
@@ -233,5 +234,5 @@ def assemble_data(xml_root, model_diagram, image_extension, page_header):
     # Generate HTML content with Bootstrap styling
     html_content = generate_html_data(diagram_elements, class_info, inheritance, model_diagram, image_extension, page_header)
     
-    return html_content 
+    return html_content, class_names
 

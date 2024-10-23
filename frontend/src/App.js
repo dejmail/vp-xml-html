@@ -1,139 +1,167 @@
-
-
 import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import FileUpload from './FileUpload';
 
-function App() {
-  const [file, setFile] = useState(null);
-  const [header, setHeader] = useState("");
+const App = () => {
+  const [header, setHeader] = useState("Extracted Model - Default Header");
   const [message, setMessage] = useState("");
-  const [generatedHtml, setGeneratedHtml] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [selectedClasses, setSelectedClasses] = useState([]);
+  const [generatedHtml, setGeneratedHtml] = useState(""); // Store the generated HTML here
+  const [disabledClasses, setDisabledClasses] = useState([]);
 
-  // Handle file input change
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
+
+  const handleFilesUploaded = (responseData) => {
+    if (responseData) {
+      if (responseData.html) {
+        setGeneratedHtml(responseData.html);  // Set the generated HTML
+      }
+      if (responseData.classes) {
+        setClasses(responseData.classes);  // Set the list of classes
+        setSelectedClasses(responseData.classes);  // Pre-select all classes by default
+      }
+    } else {
+      setMessage("No HTML or class content found in the response.");
+    }
+  };
+  
+  const handleClassToggle = (className) => {
+    setSelectedClasses((prevSelected) => {
+      let updatedSelected;
+      if (prevSelected.includes(className)) {
+        // If the class is already selected, remove it and disable it
+        updatedSelected = prevSelected.filter((name) => name !== className);
+        setDisabledClasses((prevDisabled) => [...prevDisabled, className]);
+      } else {
+        // If the class is not selected, add it
+        updatedSelected = [...prevSelected, className];
+      }
+  
+      // Update the generated HTML preview
+      const filteredHtml = generateHtmlContent();
+      setGeneratedHtml(filteredHtml);
+  
+      return updatedSelected;
+    });
   };
 
-  // Handle header input change
-  const handleHeaderChange = (event) => {
-    setHeader(event.target.value);
+
+  const generateHtmlContent = () => {
+    if (!generatedHtml) {
+      return "";
+    }
+  
+    // Parse the full HTML document from generatedHtml
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(generatedHtml, "text/html");
+  
+    // Find all <h2> elements (or appropriate elements representing class headers)
+    const h2Elements = doc.querySelectorAll("h2");
+  
+    // Iterate over <h2> elements and remove those that are not in selectedClasses
+    h2Elements.forEach((h2) => {
+      const className = h2.textContent.trim();
+  
+      // If the class is not selected, remove the <h2> and its subsequent siblings
+      if (!selectedClasses.includes(className)) {
+        let currentElement = h2;
+  
+        while (currentElement) {
+          const nextElement = currentElement.nextElementSibling;
+  
+          // Remove the current element from the DOM
+          currentElement.remove();
+  
+          // Stop when reaching another <h2> or no more siblings
+          if (nextElement && nextElement.tagName === "H2") {
+            break;
+          }
+  
+          currentElement = nextElement;
+        }
+      }
+    });
+  
+    // Return the entire updated document as a string, including the <head> and <body>
+    return doc.documentElement.outerHTML;
   };
+  
+    
 
-  // Handle file upload form submission
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!file) {
-      setMessage("Please choose a file first.");
+  const handleDownload = () => {
+    if (!generatedHtml) {
+      setMessage("No HTML available to download. Please generate the HTML first.");
       return;
     }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('header', header);
-
-    try {
-      const response = await fetch('/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setGeneratedHtml(result.html);
-        setMessage("Fil uppladdad.");
-      } else {
-        const errorResult = await response.json();
-        setMessage(`Fel med uppladdning. Vänligen försök igen. - ${errorResult.message}`);
-      }
-    } catch (error) {
-      console.error("Fel med uppladdning:", error);
-      setMessage("Fel med uppladdning. Vänligen försök igen.");
-    }
+  
+    // Create a blob from the filtered HTML content and trigger the download
+    const blob = new Blob([generatedHtml], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'filtered_classes.html';
+    link.click();
   };
-
-  // Function to trigger download of the generated HTML
-  const handleDownload = () => {
-    const element = document.createElement('a');
-    const fileBlob = new Blob([generatedHtml], { type: 'text/html' });
-    element.href = URL.createObjectURL(fileBlob);
-    element.download = "generated.html";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
+  
+  
   return (
-
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-    <div className="w-full max-w-lg mx-auto p-4 border rounded shadow bg-white">
-      
-    <div className="container">
-      <div className="row my-4">
-        <h1 className="text-1xl font-bold mb-6 text-center text-gray-800">
-          Visual Paradigm XML-HTML omvandlare
-        </h1>
-        {/* GitHub Icon Link */}
-        <div className="text-center my-4">
-          <a href="https://github.com/dejmail/vp-xml-html" target="_blank" rel="noopener noreferrer">
-            <FontAwesomeIcon icon={faGithub} size="2x" className="text-gray-800 hover:text-black transition duration-300" />
-          </a>
-        </div>
-      </div>
-
-      {/* File Upload Form */}
-      <div className="row my-4">
-        <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto p-4 border rounded shadow">
-          <div className="mb-4">
-            <label htmlFor="file" className="block text-gray-700 font-medium mb-2">Välja ZIP fil</label>
+    <div className="App">
+      <h1 className="text-2xl font-bold text-center mb-6">Visual Paradigm XML to HTML Converter</h1>
+  
+      {/* File Upload Section */}
+      <FileUpload onFilesUploaded={handleFilesUploaded} />
+  
+      <div className="my-4 text-center text-red-500">{message}</div>
+  
+      {/* Display Classes for Selection */}
+{classes && classes.length > 0 && (
+  <div className="class-selection w-full max-w-lg mx-auto p-4 border rounded shadow">
+    <h2 className="text-xl font-bold mb-4">Select Classes to Include in HTML</h2>
+    <ul>
+      {classes.map((className) => (
+        <li key={className} className="my-2">
+          <label className="flex items-center">
             <input
-              type="file"
-              id="file"
-              onChange={handleFileChange}
-              accept=".zip"
-              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+              type="checkbox"
+              checked={selectedClasses.includes(className)}
+              disabled={disabledClasses.includes(className)}
+              onChange={() => handleClassToggle(className)}
+              className="mr-2"
             />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="header" className="block text-gray-700 font-medium mb-2">Rubrik till genererat HTML</label>
-            <input
-              type="text"
-              id="header"
-              value={header}
-              onChange={handleHeaderChange}
-              placeholder="Skriva ett förslag till huvud rubrik"
-              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg p-2 focus:outline-none"
-            />
-          </div>
-          <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">
-            Ladd upp fil
-          </button>
-        </form>
-        {message && <p className="mt-4 text-center text-sm text-gray-700">{message}</p>}
-      </div>
-
-      {/* Display Generated HTML and Download Option */}
+            {className}
+          </label>
+        </li>
+      ))}
+    </ul>
+    <button
+      onClick={() => setGeneratedHtml(generateHtmlContent())}
+      className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300"
+    >
+      Generate HTML Preview
+    </button>
+  </div>
+)}
+  
+      {/* HTML Preview and Download Button */}
       {generatedHtml && (
-        <div className="row my-4">
-          <div className="w-full max-w-lg mx-auto p-4 border rounded shadow">
-            <h2 className="text-xl font-bold mb-4">HTML Utkast</h2>
-            <div
-              className="generated-html-preview border p-2"
-              dangerouslySetInnerHTML={{ __html: generatedHtml }}
-            />
-            <button
-              onClick={handleDownload}
-              className="mt-4 w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-300">
-              Ladda ner HTML fil
-            </button>
-          </div>
-        </div>
-      )}
+  <div className="row my-4">
+    <div className="w-full max-w-lg mx-auto p-4 border rounded shadow">
+      <h2 className="text-xl font-bold mb-4">HTML Preview</h2>
+      <iframe
+        title="HTML Preview"
+        className="w-full border p-2"
+        style={{ height: "600px" }}
+        srcDoc={generatedHtml} // Use `srcDoc` to embed the entire HTML document
+      />
+      <button
+        onClick={handleDownload}
+        className="mt-4 w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-300"
+      >
+        Download HTML File
+      </button>
     </div>
-    </div>
+  </div>
+)}
     </div>
   );
-}
+};
 
 export default App;
