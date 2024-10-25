@@ -102,7 +102,7 @@ const App = () => {
     link.download = 'filtered_classes.html';
     link.click();
   };
-  
+
   
   return (
     <div className="App">
@@ -110,7 +110,7 @@ const App = () => {
       <h1 className="text-2xl font-bold text-center mb-6">Visual Paradigm XML to HTML Converter</h1>
 
       {/* GitHub Icon */}
-      <div className="center">
+      <div className="center pb-3">
         <a href="https://github.com/dejmail/vp-xml-html.git" target="_blank" rel="noopener noreferrer">
           <svg
             xmlns="http://www.w3.org/2000/svg"

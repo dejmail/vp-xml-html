@@ -62,7 +62,7 @@ const FileUpload = ({ onFilesUploaded }) => {
       
       {files.length > 0 && (
 
-<div class="mt-4 p-4 border border-gray-200 rounded-lg shadow-lg bg-gray-50 w-1/2 mx-auto">
+<div class="mt-4 p-4 border border-gray-200 rounded-lg shadow-lg bg-gray-50 w-1/6 mx-auto">
   <strong class="block text-lg font-semibold text-gray-700 mb-2">Selected Files:</strong>
   <ul class="list-disc list-inside text-gray-600">
             {files.map(file => (
@@ -74,7 +74,7 @@ const FileUpload = ({ onFilesUploaded }) => {
 
       <button
         onClick={handleUpload}
-        className="w-1/2 mx-auto mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300 block"
+        className="w-1/6 mx-auto mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300 block"
         
 
       >

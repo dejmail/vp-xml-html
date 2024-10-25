@@ -28,7 +28,6 @@ def parse_xml(root):
         # Find all attributes within the class
         attributes = []
         for attr in cls.findall('.//Attribute'):
-            #if class_name == "VGR_Adress": set_trace()
             attr_name = attr.get('Name', 'Unnamed Attribute')
             attr_type = attr.find('.//Type/DataType')
             attr_type_name = attr_type.get('Name', 'Unknown') if attr_type is not None else 'Unknown'
@@ -79,25 +78,25 @@ def extract_instance_inheritance(root):
 
 def extract_diagram_shapes(root):
 
-    diagram_shapes = []
+    def extract_shapes(shapes):
+        diagram_shapes = []
+        for shape in shapes:
+            diagram_shapes.append({
+                'id': shape.get('Name', 'No Name'),
+                'name': shape.get('Name', 'No Name'),
+                'x': shape.get('X', '0'),
+                'y': shape.get('Y', '0'),
+                'width': shape.get('Width', '50'),  # Default width if not specified
+                'height': shape.get('Height', '50')  # Default height if not specified
+            })
+        return diagram_shapes
 
-    # Find all InstanceSpecification elements under the Shapes tag within Diagrams
-    for shape in root.findall(".//Diagrams//Shapes//InstanceSpecification"):
-        element_id = shape.get('Id', 'No ID')
-        element_name = shape.get('Name', 'No Name')
-        x = shape.get('X', '0')
-        y = shape.get('Y', '0')
-        width = shape.get('Width', '50')  # Default width if not specified
-        height = shape.get('Height', '50')  # Default height if not specified
-        # Store the shape details
-        diagram_shapes.append({
-            'id': element_name,
-            'name': element_name,
-            'x': x,
-            'y': y,
-            'width': width,
-            'height': height
-        })
+    # Extract InstanceSpecification elements under Diagrams
+    diagram_shapes = extract_shapes(root.findall(".//Diagrams//Shapes//InstanceSpecification"))
+
+    # If no shapes found, extract elements under ClassDiagram
+    if not diagram_shapes:
+        diagram_shapes = extract_shapes(root.findall(".//Diagrams//ClassDiagram//Shapes//Class"))
     
     return diagram_shapes
 
@@ -157,16 +156,17 @@ def generate_html_data(diagram_elements,
     """
 
     if image_extension == 'svg':
-        html_output += f"""<img src="data:image/{image_extension}+xml;base64,{base64.b64encode(model_diagram).decode('utf-8')}" alt="Beskrivning av modellen" usemap="#modelmap" class="border shadow">"""
+        html_output += f"""<img src="data:image/{image_extension}+xml;base64,{base64.b64encode(model_diagram).decode('utf-8')}" alt="Beskrivning av modellen" style="width: 100%; height: auto; position: relative;" usemap="#modelmap" id="modelImage" class="border shadow">"""
     else:
         html_output += f"""<img src="data:image/svg+xml;base64,{base64.b64encode(model_diagram).decode('utf-8')}" alt="Beskrivning av modellen" usemap="#modelmap" class="border shadow">"""
     
     html_output += """</div> 
     
-    <map name="modelmap">
+
+    <svg id="overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+        
     """
 
-    # set_trace()
     # Define the clickable areas based on diagram elements
     for element in diagram_elements:
         idref = element['id']
@@ -177,12 +177,14 @@ def generate_html_data(diagram_elements,
         name = element['name']
 
         # Use the idref to create a clickable area
-        map_area = f'<area shape="rect" coords="{x},{y},{float(x)+float(width)},{float(y)+float(height)}" href="#{idref}" alt="{idref}" name="{name}">'
-        print(map_area)
-        # set_trace()
+        
+        map_area = f'''
+        <a href="#{idref}"> <rect x="{x}" y="{y}" height="{float(height)}" width="{float(width)}" fill="transparent" alt="{idref}" name="{name}" style="pointer-events: all;">
+            </rect>
+        </a>'''
         html_output += map_area
         
-    html_output += "</map>"
+    html_output += "</svg>"
     
     # Iterate over each class and create HTML tables
     for cls in classes:
@@ -213,6 +215,94 @@ def generate_html_data(diagram_elements,
         
         html_output += "</tbody></table><br><br>"
     
+    html_output += """
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+    // Step 1: Get reference to the SVG overlay
+    const overlay = document.getElementById("overlay");
+
+    // Step 2: Find all rect elements within the overlay SVG
+    const rectElements = overlay.querySelectorAll("rect");
+
+    // Step 3: Iterate through each rect and extract its attributes
+    const const_areas = [];
+    rectElements.forEach((rect) => {
+        const x = parseFloat(rect.getAttribute("x"));
+        const y = parseFloat(rect.getAttribute("y"));
+        const width = parseFloat(rect.getAttribute("width"));
+        const height = parseFloat(rect.getAttribute("height"));
+        const name = rect.getAttribute("name");  // Assuming you have 'name' attribute
+
+        const_areas.push({ x, y, width, height, name });
+    });
+
+    console.log("Initial areas from overlay:", const_areas);
+
+    // References to the image and SVG overlay
+    const img = document.getElementById('modelImage');
+    const svg = document.getElementById('overlay');
+
+    // Function to create the visual overlay and clickable SVG shapes
+    function drawSvgOverlay() {
+        if (img && svg) {
+            // Get the bounding box of the image
+            const imgRect = img.getBoundingClientRect();
+
+            // Set SVG overlay dimensions to match the image
+            svg.setAttribute('width', imgRect.width);
+            svg.setAttribute('height', imgRect.height);
+            svg.style.width = imgRect.width + "px";
+            svg.style.height = imgRect.height + "px";
+            svg.style.left = imgRect.left + "px";
+            svg.style.top = imgRect.top + "px";
+
+            // Calculate scaling factors based on the current image size vs original size
+            const scaleX = imgRect.width / img.naturalWidth;
+            const scaleY = imgRect.height / img.naturalHeight;
+
+            // Clear the existing SVG elements
+            svg.innerHTML = '';
+
+            // Iterate over each area and add corresponding SVG elements
+            const_areas.forEach(area => {
+                const scaledX = area.x * scaleX;
+                const scaledY = area.y * scaleY;
+                const scaledWidth = area.width * scaleX;
+                const scaledHeight = area.height * scaleY;
+
+                const rectElement = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rectElement.setAttribute("x", scaledX);
+                rectElement.setAttribute("y", scaledY);
+                rectElement.setAttribute("width", scaledWidth);
+                rectElement.setAttribute("height", scaledHeight);
+                rectElement.setAttribute("fill", "transparent");
+                // rectElement.setAttribute("stroke", "red");
+                // rectElement.setAttribute("stroke-width", "2");
+
+                // Create a hyperlink element if needed
+                const linkElement = document.createElementNS("http://www.w3.org/2000/svg", "a");
+                linkElement.setAttribute("href", area.href || `#${area.name}`);
+                linkElement.appendChild(rectElement);
+
+                svg.appendChild(linkElement);
+            });
+        }
+    }
+
+    // Ensure overlay is drawn after image has loaded
+    img.addEventListener('load', drawSvgOverlay);
+    
+    // Recalculate and redraw the overlay on window resize
+    window.addEventListener('resize', drawSvgOverlay);
+
+    // Draw the overlay after the DOM content is fully loaded and image is available
+    if (img.complete) {
+        drawSvgOverlay(); // Draw immediately if the image is already loaded
+    }
+});
+</script>
+"""
+
     html_output += """
     </div>
     </body>
