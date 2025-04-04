@@ -7,6 +7,18 @@ from flask_cors import CORS
 
 import xml.etree.ElementTree as ET
 
+import logging
+
+
+logging.basicConfig(
+    level=logging.INFO,  # Change to DEBUG for more verbosity
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    handlers=[
+        logging.StreamHandler()  # You can add FileHandler here too
+    ]
+)
+
+
 app = Flask(__name__)
 CORS(app)
 
@@ -27,9 +39,8 @@ def upload_file():
 
     if len(request.files) < 2:
         return jsonify({"message": "Behöver project.xml och en modell i SVG format"}), 400
-        # return redirect(request.url)
     elif len(request.files) == 2:
-        page_header = request.form.get('header', 'Extraherad Model  - Default Rubrik')  # Get header value from form
+        page_header = request.form.get('header', 'Extraherad Model')
     
         for file in request.files:
             

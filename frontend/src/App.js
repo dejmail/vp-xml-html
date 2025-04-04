@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import FileUpload from './FileUpload';
 
 const App = () => {
-  const [header, setHeader] = useState("Extracted Model - Default Header");
   const [message, setMessage] = useState("");
   const [classes, setClasses] = useState([]);
   const [selectedClasses, setSelectedClasses] = useState([]);

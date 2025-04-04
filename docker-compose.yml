@@ -12,6 +12,8 @@ services:
       - ./backend:/app
     environment:
       FLASK_ENV: development
+    networks:
+      - vp-xml-app-network
 
   frontend:
     build:
@@ -25,3 +27,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    networks:
+      - vp-xml-app-network
+networks:
+  vp-xml-app-network:
+    driver: bridge

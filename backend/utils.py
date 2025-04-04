@@ -5,6 +5,7 @@ import base64
 import html
 from pdb import set_trace
 
+
 app = Flask(__name__)
 
 
@@ -13,14 +14,18 @@ def parse_xml(root):
     # Extract class information
     class_info = []
     class_names = []
+    app.logger.info("Parsing the XML file for class information...")
     # Find all classes
     for cls in root.findall('.//Class'):
+        
         class_name = cls.get('Name')
         class_id = cls.get('Id')
 
         # Skip unnamed classes
         if not class_name:
             continue
+
+        app.logger.debug(f"Processing class: {cls.get('Name')}")
 
         # Check and print Documentation_plain for debugging
         class_description = cls.get('Documentation_plain', default=None)
@@ -31,8 +36,7 @@ def parse_xml(root):
             attr_name = attr.get('Name', 'Unnamed Attribute')
             attr_type = attr.find('.//Type/DataType')
             attr_type_name = attr_type.get('Name', 'Unknown') if attr_type is not None else 'Unknown'
-            attr_cardinality = attr.get('Multiplicity')#find('.//MultiplicityDetail/Multiplicity')
-            #attr_cardinality_value = attr_cardinality.get('Name', 'Unknown') if attr_cardinality is not None else 'Unknown'
+            attr_cardinality = attr.get('Multiplicity')
             attr_description = attr.get('Documentation', default='Ingen beskrivning tillgänglig')
 
             attributes.append({
